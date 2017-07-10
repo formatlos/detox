@@ -7,70 +7,76 @@ const InvocationManager = require('../invoke').InvocationManager;
 const invoke = require('../invoke');
 const GREYConfiguration = require('./../ios/earlgreyapi/GREYConfiguration');
 const argparse = require('../utils/argparse');
-
+const exec = require('child-process-promise').exec;
 
 class IosDriver extends DeviceDriverBase {
 
-  constructor(client) {
-    super(client);
+	constructor(client) {
+		super(client);
 
-    const expect = require('../ios/expect');
-    expect.exportGlobals();
-    expect.setInvocationManager(new InvocationManager(client));
-  }
+		const expect = require('../ios/expect');
+		expect.exportGlobals();
+		expect.setInvocationManager(new InvocationManager(client));
+	}
 
-  createPushNotificationJson(notification) {
-    const notificationFilePath = path.join(__dirname, `detox`, `notifications`, `notification.json`);
-    this.ensureDirectoryExistence(notificationFilePath);
-    fs.writeFileSync(notificationFilePath, JSON.stringify(notification, null, 2));
-    return notificationFilePath;
-  }
+	createPushNotificationJson(notification) {
+		const notificationFilePath = path.join(__dirname, `detox`, `notifications`, `notification.json`);
+		this.ensureDirectoryExistence(notificationFilePath);
+		fs.writeFileSync(notificationFilePath, JSON.stringify(notification, null, 2));
+		return notificationFilePath;
+	}
 
-  async sendUserNotification(notification) {
-    const notificationFilePath = this.createPushNotificationJson(notification);
-    await super.sendUserNotification({detoxUserNotificationDataURL: notificationFilePath});
-  }
+	async prepare() {
+		const version = require(path.join(__dirname, '../../package.json')).version;
+		const sha1 = await exec(`(echo "${version} && xcodebuild -version) | shasum | awk '{print $1}'`);
+		console.log(sha1);
+	}
 
-  async openURL(deviceId, params) {
-    this.client.openURL(params);
-  }
+	async sendUserNotification(notification) {
+		const notificationFilePath = this.createPushNotificationJson(notification);
+		await super.sendUserNotification({ detoxUserNotificationDataURL: notificationFilePath });
+	}
 
-  async setURLBlacklist(urlList) {
-    await this.client.execute(GREYConfiguration.setURLBlacklist(urlList));
-  }
+	async openURL(deviceId, params) {
+		this.client.openURL(params);
+	}
 
-  async enableSynchronization() {
-    await this.client.execute(GREYConfiguration.enableSynchronization());
-  }
+	async setURLBlacklist(urlList) {
+		await this.client.execute(GREYConfiguration.setURLBlacklist(urlList));
+	}
 
-  async disableSynchronization() {
-    await this.client.execute(GREYConfiguration.disableSynchronization());
-  }
+	async enableSynchronization() {
+		await this.client.execute(GREYConfiguration.enableSynchronization());
+	}
 
-  async setOrientation(orientation) {
-    // keys are possible orientations
-    const orientationMapping = {
-      landscape: 3, // top at left side landscape
-      portrait: 1  // non-reversed portrait
-    };
-    if (!Object.keys(orientationMapping).includes(orientation)) {
-      throw new Error(`setOrientation failed: provided orientation ${orientation} is not part of supported orientations: ${Object.keys(orientationMapping)}`)
-    }
+	async disableSynchronization() {
+		await this.client.execute(GREYConfiguration.disableSynchronization());
+	}
 
-    const call = invoke.call(invoke.EarlGrey.instance,
-      'rotateDeviceToOrientation:errorOrNil:',
-      invoke.IOS.NSInteger(orientationMapping[orientation])
-    );
-    await this.client.execute(call);
-  }
+	async setOrientation(orientation) {
+		// keys are possible orientations
+		const orientationMapping = {
+			landscape: 3, // top at left side landscape
+			portrait: 1  // non-reversed portrait
+		};
+		if (!Object.keys(orientationMapping).includes(orientation)) {
+			throw new Error(`setOrientation failed: provided orientation ${orientation} is not part of supported orientations: ${Object.keys(orientationMapping)}`)
+		}
 
-  defaultLaunchArgsPrefix() {
-    return '-';
-  }
+		const call = invoke.call(invoke.EarlGrey.instance,
+			'rotateDeviceToOrientation:errorOrNil:',
+			invoke.IOS.NSInteger(orientationMapping[orientation])
+		);
+		await this.client.execute(call);
+	}
 
-  validateDeviceConfig(config) {
-    //no validation
-  }
+	defaultLaunchArgsPrefix() {
+		return '-';
+	}
+
+	validateDeviceConfig(config) {
+		//no validation
+	}
 }
 
 module.exports = IosDriver;

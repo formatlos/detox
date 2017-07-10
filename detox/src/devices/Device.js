@@ -6,143 +6,145 @@ const configuration = require('../configuration');
 
 class Device {
 
-  constructor(deviceConfig, sessionConfig, deviceDriver) {
-    this._deviceConfig = deviceConfig;
-    this._sessionConfig = sessionConfig;
-    this.deviceDriver = deviceDriver;
+	constructor(deviceConfig, sessionConfig, deviceDriver) {
+		this._deviceConfig = deviceConfig;
+		this._sessionConfig = sessionConfig;
+		this.deviceDriver = deviceDriver;
 
-    this.deviceDriver.validateDeviceConfig(deviceConfig);
-  }
+		this.deviceDriver.validateDeviceConfig(deviceConfig);
+	}
 
-  async prepare() {
-    this._binaryPath = this._getAbsolutePath(this._deviceConfig.binaryPath);
-    this._deviceId = await this.deviceDriver.acquireFreeDevice(this._deviceConfig.name);
-    this._bundleId = await this.deviceDriver.getBundleIdFromBinary(this._binaryPath);
+	async prepare() {
+		this._binaryPath = this._getAbsolutePath(this._deviceConfig.binaryPath);
+		this._deviceId = await this.deviceDriver.acquireFreeDevice(this._deviceConfig.name);
+		this._bundleId = await this.deviceDriver.getBundleIdFromBinary(this._binaryPath);
 
-    await this.deviceDriver.boot(this._deviceId);
-    await this.relaunchApp({delete: !argparse.getArgValue('reuse')});
-  }
+		await this.deviceDriver.prepare();
 
-  async relaunchApp(params = {}, bundleId) {
-    if (params.url && params.userNotification) {
-      throw new Error(`detox can't understand this 'relaunchApp(${JSON.stringify(params)})' request, either request to launch with url or with userNotification, not both`);
-    }
+		await this.deviceDriver.boot(this._deviceId);
+		await this.relaunchApp({ delete: !argparse.getArgValue('reuse') });
+	}
 
-    if (params.delete) {
-      await this.deviceDriver.uninstallApp(this._deviceId, this._bundleId);
-      await this.deviceDriver.installApp(this._deviceId, this._binaryPath);
-    } else {
-      await this.deviceDriver.terminate(this._deviceId, this._bundleId);
-    }
+	async relaunchApp(params = {}, bundleId) {
+		if (params.url && params.userNotification) {
+			throw new Error(`detox can't understand this 'relaunchApp(${JSON.stringify(params)})' request, either request to launch with url or with userNotification, not both`);
+		}
 
-
-    let additionalLaunchArgs;
-    if (params.url) {
-      additionalLaunchArgs = {'detoxURLOverride': params.url};
-      if(params.sourceApp) {
-        additionalLaunchArgs['detoxSourceAppOverride'] = params.sourceApp;
-      }
-    } else if (params.userNotification) {
-      additionalLaunchArgs = {'detoxUserNotificationDataURL': this.deviceDriver.createPushNotificationJson(params.userNotification)};
-    }
-
-    if (params.permissions) {
-      await this.deviceDriver.setPermissions(this._deviceId, this._bundleId, params.permissions);
-    }
-
-    this._addPrefixToDefaultLaunchArgs(additionalLaunchArgs);
-
-    const _bundleId = bundleId || this._bundleId;
-    await this.deviceDriver.launch(this._deviceId, _bundleId, this._prepareLaunchArgs(additionalLaunchArgs));
-    await this.deviceDriver.waitUntilReady();
-  }
+		if (params.delete) {
+			await this.deviceDriver.uninstallApp(this._deviceId, this._bundleId);
+			await this.deviceDriver.installApp(this._deviceId, this._binaryPath);
+		} else {
+			await this.deviceDriver.terminate(this._deviceId, this._bundleId);
+		}
 
 
-  async installApp(binaryPath) {
-    const _binaryPath = binaryPath || this._binaryPath;
-    await this.deviceDriver.installApp(this._deviceId, _binaryPath);
-  }
+		let additionalLaunchArgs;
+		if (params.url) {
+			additionalLaunchArgs = { 'detoxURLOverride': params.url };
+			if (params.sourceApp) {
+				additionalLaunchArgs['detoxSourceAppOverride'] = params.sourceApp;
+			}
+		} else if (params.userNotification) {
+			additionalLaunchArgs = { 'detoxUserNotificationDataURL': this.deviceDriver.createPushNotificationJson(params.userNotification) };
+		}
 
-  async uninstallApp(bundleId) {
-    const _bundleId = bundleId || this._bundleId;
-    await this.deviceDriver.uninstallApp(this._deviceId, _bundleId);
-  }
+		if (params.permissions) {
+			await this.deviceDriver.setPermissions(this._deviceId, this._bundleId, params.permissions);
+		}
 
-  async reloadReactNative() {
-    await this.deviceDriver.reloadReactNative();
-  }
+		this._addPrefixToDefaultLaunchArgs(additionalLaunchArgs);
 
-  async openURL(params) {
-    if(typeof params !== 'object' || !params.url) {
-      throw new Error(`openURL must be called with JSON params, and a value for 'url' key must be provided. example: await device.openURL({url: "url", sourceApp: "sourceAppBundleID"}`);
-    }
+		const _bundleId = bundleId || this._bundleId;
+		await this.deviceDriver.launch(this._deviceId, _bundleId, this._prepareLaunchArgs(additionalLaunchArgs));
+		await this.deviceDriver.waitUntilReady();
+	}
 
-    await this.deviceDriver.openURL(this._deviceId, params);
-  }
 
-  async shutdown() {
-    await this.deviceDriver.shutdown(this._deviceId);
-  }
+	async installApp(binaryPath) {
+		const _binaryPath = binaryPath || this._binaryPath;
+		await this.deviceDriver.installApp(this._deviceId, _binaryPath);
+	}
 
-  async setOrientation(orientation) {
-    await this.deviceDriver.setOrientation(orientation);
-  }
+	async uninstallApp(bundleId) {
+		const _bundleId = bundleId || this._bundleId;
+		await this.deviceDriver.uninstallApp(this._deviceId, _bundleId);
+	}
 
-  async setLocation(lat, lon) {
-    await this.deviceDriver.setLocation(this._deviceId, lat, lon);
-  }
+	async reloadReactNative() {
+		await this.deviceDriver.reloadReactNative();
+	}
 
-  async sendUserNotification(params) {
-    await this.deviceDriver.sendUserNotification(params);
-  }
+	async openURL(params) {
+		if (typeof params !== 'object' || !params.url) {
+			throw new Error(`openURL must be called with JSON params, and a value for 'url' key must be provided. example: await device.openURL({url: "url", sourceApp: "sourceAppBundleID"}`);
+		}
 
-  async setURLBlacklist(urlList) {
-    await this.deviceDriver.setURLBlacklist(urlList);
-  }
+		await this.deviceDriver.openURL(this._deviceId, params);
+	}
 
-  async enableSynchronization() {
-    await this.deviceDriver.enableSynchronization();
-  }
+	async shutdown() {
+		await this.deviceDriver.shutdown(this._deviceId);
+	}
 
-  async disableSynchronization() {
-    await this.deviceDriver.disableSynchronization();
-  }
+	async setOrientation(orientation) {
+		await this.deviceDriver.setOrientation(orientation);
+	}
 
-  _defaultLaunchArgs() {
-    return {
-      'detoxServer': this._sessionConfig.server,
-      'detoxSessionId': this._sessionConfig.sessionId
-    };
-  }
+	async setLocation(lat, lon) {
+		await this.deviceDriver.setLocation(this._deviceId, lat, lon);
+	}
 
-  _addPrefixToDefaultLaunchArgs(args) {
-    let newArgs = {};
-    _.forEach(args, (value, key) => {
-      newArgs[`${this.deviceDriver.defaultLaunchArgsPrefix()}${key}`] = value;
-    });
-    return newArgs;
-  }
+	async sendUserNotification(params) {
+		await this.deviceDriver.sendUserNotification(params);
+	}
 
-  _prepareLaunchArgs(additionalLaunchArgs) {
+	async setURLBlacklist(urlList) {
+		await this.deviceDriver.setURLBlacklist(urlList);
+	}
 
-    let args = [];
-    const merged = _.merge(this._defaultLaunchArgs(), additionalLaunchArgs);
-    const launchArgs = this._addPrefixToDefaultLaunchArgs(merged);
-    args = args.concat(_.flatten(Object.entries(launchArgs)));
-    return args;
-  }
+	async enableSynchronization() {
+		await this.deviceDriver.enableSynchronization();
+	}
 
-  _getAbsolutePath(appPath) {
-    if (!appPath) {
-      return '';
-    }
-    const absPath = path.join(process.cwd(), appPath);
-    if (fs.existsSync(absPath)) {
-      return absPath;
-    } else {
-      throw new Error(`app binary not found at '${absPath}', did you build it?`);
-    }
-  }
+	async disableSynchronization() {
+		await this.deviceDriver.disableSynchronization();
+	}
+
+	_defaultLaunchArgs() {
+		return {
+			'detoxServer': this._sessionConfig.server,
+			'detoxSessionId': this._sessionConfig.sessionId
+		};
+	}
+
+	_addPrefixToDefaultLaunchArgs(args) {
+		let newArgs = {};
+		_.forEach(args, (value, key) => {
+			newArgs[`${this.deviceDriver.defaultLaunchArgsPrefix()}${key}`] = value;
+		});
+		return newArgs;
+	}
+
+	_prepareLaunchArgs(additionalLaunchArgs) {
+
+		let args = [];
+		const merged = _.merge(this._defaultLaunchArgs(), additionalLaunchArgs);
+		const launchArgs = this._addPrefixToDefaultLaunchArgs(merged);
+		args = args.concat(_.flatten(Object.entries(launchArgs)));
+		return args;
+	}
+
+	_getAbsolutePath(appPath) {
+		if (!appPath) {
+			return '';
+		}
+		const absPath = path.join(process.cwd(), appPath);
+		if (fs.existsSync(absPath)) {
+			return absPath;
+		} else {
+			throw new Error(`app binary not found at '${absPath}', did you build it?`);
+		}
+	}
 }
 
 module.exports = Device;

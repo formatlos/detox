@@ -5,49 +5,49 @@ const exec = require('child-process-promise').exec;
 let _operationCounter = 0;
 
 async function execWithRetriesAndLogs(bin, options, statusLogs, retries = 10, interval = 1000) {
-  _operationCounter++;
+	_operationCounter++;
 
-  let cmd;
-  if (options) {
-    cmd = `${options.prefix ? options.prefix + ' && ' : ''}${bin} ${options.args}`;
-  } else {
-    cmd = bin;
-  }
+	let cmd;
+	if (options) {
+		cmd = `${options.prefix ? options.prefix + ' && ' : ''}${bin} ${options.args}`;
+	} else {
+		cmd = bin;
+	}
 
-  log.verbose(`${_operationCounter}: ${cmd}`);
+	log.verbose(`${_operationCounter}: ${cmd}`);
 
-  let result;
-  await retry({retries, interval}, async() => {
-    if (statusLogs && statusLogs.trying) {
-      log.info(`${_operationCounter}: ${statusLogs.trying}`);
-    }
-    result = await exec(cmd);
-  });
-  if (result === undefined) {
-    throw new Error(`${_operationCounter}: running "${cmd}" returned undefined`);
-  }
+	let result;
+	await retry({ retries, interval }, async () => {
+		if (statusLogs && statusLogs.trying) {
+			log.info(`${_operationCounter}: ${statusLogs.trying}`);
+		}
+		result = await exec(cmd);
+	});
+	if (result === undefined) {
+		throw new Error(`${_operationCounter}: running "${cmd}" returned undefined`);
+	}
 
-  if (result.stdout) {
-    log.silly(`${_operationCounter}: stdout:`, result.stdout);
-  }
+	if (result.stdout) {
+		log.silly(`${_operationCounter}: stdout:`, result.stdout);
+	}
 
-  if (result.stderr) {
-    log.silly(`${_operationCounter}: stderr:`, result.stderr);
-  }
+	if (result.stderr) {
+		log.silly(`${_operationCounter}: stderr:`, result.stderr);
+	}
 
-  if (statusLogs && statusLogs.successful) {
-    log.info(`${_operationCounter}: ${statusLogs.successful}`);
-  }
+	if (statusLogs && statusLogs.successful) {
+		log.info(`${_operationCounter}: ${statusLogs.successful}`);
+	}
 
-  //if (result.childProcess.exitCode !== 0) {
-  //  log.error(`${_operationCounter}: stdout:`, result.stdout);
-  //  log.error(`${_operationCounter}: stderr:`, result.stderr);
-  //}
+	//if (result.childProcess.exitCode !== 0) {
+	//  log.error(`${_operationCounter}: stdout:`, result.stdout);
+	//  log.error(`${_operationCounter}: stderr:`, result.stderr);
+	//}
 
-  return result;
+	return result;
 }
 
 module.exports = {
-  execWithRetriesAndLogs
+	execWithRetriesAndLogs
 };
 

@@ -3,108 +3,112 @@ const fs = require('fs');
 const path = require('path');
 
 class DeviceDriverBase {
-  constructor(client) {
-    this.client = client;
-  }
+	constructor(client) {
+		this.client = client;
+	}
 
-  async acquireFreeDevice(name) {
-    return await Promise.resolve('');
-  }
+	async acquireFreeDevice(name) {
+		await Promise.resolve('');
+	}
 
-  async boot() {
-    return await Promise.resolve('');
-  }
+	async prepare() {
+		return await Promise.resolve('');
+	}
 
-  async launch() {
-    return await Promise.resolve('');
-  }
+	async boot() {
+		return await Promise.resolve('');
+	}
 
-  async relaunchApp() {
-    return await Promise.resolve('');
-  }
+	async launch() {
+		return await Promise.resolve('');
+	}
 
-  async installApp() {
-    return await Promise.resolve('');
-  }
+	async relaunchApp() {
+		return await Promise.resolve('');
+	}
 
-  async uninstallApp() {
-    return await Promise.resolve('');
-  }
+	async installApp() {
+		return await Promise.resolve('');
+	}
 
-  async openURL(params) {
-    return await Promise.resolve('');
-  }
+	async uninstallApp() {
+		return await Promise.resolve('');
+	}
 
-  async setLocation(lat, lon) {
-    return await Promise.resolve('');
-  }
+	async openURL(params) {
+		return await Promise.resolve('');
+	}
 
-  async waitUntilReady() {
-    return await this.client.waitUntilReady();
-  }
+	async setLocation(lat, lon) {
+		return await Promise.resolve('');
+	}
 
-  async reloadReactNative() {
-    return await this.client.reloadReactNative();
-  }
+	async waitUntilReady() {
+		return await this.client.waitUntilReady();
+	}
 
-  async sendUserNotification(params) {
-    await this.client.sendUserNotification(params);
-  }
+	async reloadReactNative() {
+		return await this.client.reloadReactNative();
+	}
 
-  createPushNotificationJson(notification) {
+	async sendUserNotification(params) {
+		await this.client.sendUserNotification(params);
+	}
 
-  }
+	createPushNotificationJson(notification) {
 
-  async setPermissions(deviceId, bundleId, permissions) {
-    return await Promise.resolve('');
-  }
+	}
 
-  async terminate(deviceId, bundleId) {
-    return await Promise.resolve('');
-  }
+	async setPermissions(deviceId, bundleId, permissions) {
+		return await Promise.resolve('');
+	}
 
-  async shutdown() {
-    return await Promise.resolve('');
-  }
+	async terminate(deviceId, bundleId) {
+		return await Promise.resolve('');
+	}
 
-  async setOrientation(urlList) {
-    return await Promise.resolve('');
-  }
+	async shutdown() {
+		return await Promise.resolve('');
+	}
 
-  async setURLBlacklist(urlList) {
-    return await Promise.resolve('');
-  }
+	async setOrientation(urlList) {
+		return await Promise.resolve('');
+	}
 
-  async enableSynchronization() {
-    return await Promise.resolve('');
-  }
+	async setURLBlacklist(urlList) {
+		return await Promise.resolve('');
+	}
 
-  async disableSynchronization() {
-    return await Promise.resolve('');
-  }
+	async enableSynchronization() {
+		return await Promise.resolve('');
+	}
 
-  defaultLaunchArgsPrefix() {
-    return '';
-  }
+	async disableSynchronization() {
+		return await Promise.resolve('');
+	}
 
-  ensureDirectoryExistence(filePath) {
-    const dirname = path.dirname(filePath);
-    if (fs.existsSync(dirname)) {
-      return true;
-    }
+	defaultLaunchArgsPrefix() {
+		return '';
+	}
 
-    this.ensureDirectoryExistence(dirname);
-    fs.mkdirSync(dirname);
-    return true;
-  }
+	ensureDirectoryExistence(filePath) {
+		const dirname = path.dirname(filePath);
+		if (fs.existsSync(dirname)) {
+			return true;
+		}
 
-  getBundleIdFromBinary(appPath) {
+		this.ensureDirectoryExistence(dirname);
+		fs.mkdirSync(dirname);
+		return true;
+	}
 
-  }
+	getBundleIdFromBinary(appPath) {
 
-  validateDeviceConfig(deviceConfig) {
+	}
 
-  }
+	validateDeviceConfig(deviceConfig) {
+
+	}
 }
 
 module.exports = DeviceDriverBase;
